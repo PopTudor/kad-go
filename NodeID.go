@@ -14,13 +14,14 @@ type NodeID [NodeLen]byte
 
 func NewNodeID() NodeID {
 	var token [NodeLen]byte
+	var token2 [NodeLen]byte
 	rand.Seed(time.Now().UnixNano())
 	rand.Read(token[:])
 	hasher := sha1.New()
 	hasher.Write(token[:])
 	sha := hasher.Sum(nil)
-	copy(token[:], sha)
-	return NodeID(token)
+	copy(token2[:], sha)
+	return NodeID(token2)
 }
 
 // More shared bit pre-fix means closer distance between node ids
@@ -38,14 +39,15 @@ func NewNodeID() NodeID {
 // the distance would have been greater
 // Notice that the longer the shared sequence of bits is, the more zeroes we have
 // in the resulting number
-func (nid *NodeID) PrefixLen(oid *NodeID) uint32 {
+func (nid *NodeID) SharedPrefixLen(oid *NodeID) uint32 {
 	var prefix uint32 = 0
 	for i := 0; i < NodeLen; i++ {
 		xor := nid[i] ^ oid[i]
 		leadingZeros := bits.LeadingZeros8(xor)
 		prefix += uint32(leadingZeros)
-		println(xor)
+		//fmt.Printf("%08b %08b zeroes %08b\n", nid[i], oid[i], xor)
 		if leadingZeros == 0 {
+			//fmt.Println("break\n")
 			break
 		}
 	}
@@ -58,7 +60,7 @@ func (nid *NodeID) DescribeHex() {
 	fmt.Printf("%X\n", nid.Slice())
 }
 func (nid *NodeID) DescribeBinary() {
-	fmt.Printf("%b\n", nid.Slice())
+	fmt.Printf("%08b\n", nid.Slice())
 }
 func (nid *NodeID) Array() [NodeLen]byte {
 	return [NodeLen]byte(*nid)
