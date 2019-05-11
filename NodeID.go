@@ -14,14 +14,13 @@ type NodeID [NodeLen]byte
 
 func NewNodeID() NodeID {
 	var token [NodeLen]byte
-	var token2 [NodeLen]byte
 	rand.Seed(time.Now().UnixNano())
 	rand.Read(token[:])
 	hasher := sha1.New()
 	hasher.Write(token[:])
 	sha := hasher.Sum(nil)
-	copy(token2[:], sha)
-	return NodeID(token2)
+	copy(token[:], sha)
+	return NodeID(token)
 }
 
 // More shared bit pre-fix means closer distance between node ids
@@ -54,7 +53,7 @@ func (nid *NodeID) SharedPrefixLen(oid *NodeID) uint32 {
 	return prefix
 }
 func (nid *NodeID) Describe() {
-	fmt.Printf("%s\n", nid.String())
+	fmt.Printf("NodeId: %s\n", nid.String())
 }
 func (nid *NodeID) DescribeHex() {
 	fmt.Printf("%X\n", nid.Slice())
@@ -70,5 +69,5 @@ func (nid *NodeID) Slice() []byte {
 	return bytes[:]
 }
 func (nid *NodeID) String() string {
-	return fmt.Sprintf("%v", [NodeLen]byte(*nid))
+	return fmt.Sprintf("%X", [NodeLen]byte(*nid))
 }

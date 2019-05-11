@@ -1,16 +1,23 @@
 package main
 
-import (
-	"net"
-)
-
 type Node struct {
 	ID           NodeID
-	RoutingTable RoutingTable
+	RoutingTable *RoutingTable
+	DHT          DHT
 }
 
-func (n *Node) Distance(contact Contact) {
-
+func NewNode() *Node {
+	id := NewNodeID()
+	return &Node{
+		ID:           id,
+		RoutingTable: NewRoutingTable(id),
+	}
+}
+func NewNodeWithId(id NodeID) *Node {
+	return &Node{
+		ID:           id,
+		RoutingTable: NewRoutingTable(id),
+	}
 }
 
 // ping a node to find out if is online
@@ -43,27 +50,6 @@ func (n *Node) Store(value FileID, contact Contact) {
  *
  */
 type FindValueResponse struct {
-	ValueFound DHTSegment
+	ValueFound Segment
 	Contacts   []Contact
-}
-
-type RoutingTable struct {
-}
-
-func (rt *RoutingTable) Add(contact Contact) {
-
-}
-
-type Bucket struct {
-	Contacts []Contact
-}
-type Contact struct {
-	ID NodeID
-	IP net.IPAddr
-}
-
-type FileID string
-type DHTSegment struct {
-	ID  FileID
-	URL string
 }
