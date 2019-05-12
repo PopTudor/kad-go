@@ -5,12 +5,13 @@ import (
 	"net"
 )
 
-const DistanceBuckets = 20
-const NodesInBucket = 20
+const DistanceBuckets = 160
 
 type RoutingTable struct {
 	currentNode NodeID
-	buckets     [DistanceBuckets]Bucket
+	// buckets with index closer to 0 store contacts further from the current node because they share less prefix bits
+	// the current node is in the last bucket because shared prefix len is 160
+	buckets [DistanceBuckets]Bucket
 }
 
 func NewRoutingTable(id NodeID) *RoutingTable {
@@ -22,8 +23,8 @@ func NewRoutingTable(id NodeID) *RoutingTable {
 
 func (rt *RoutingTable) Add(contact Contact) {
 	prefixLen := rt.currentNode.SharedPrefixLen(&contact.ID)
-	if prefixLen >= DistanceBuckets {
-		// if outside of bucket do what? ignore or return something?
+	if prefixLen == DistanceBuckets {
+		rt.buckets[prefixLen-1].Add(&contact)
 		return
 	}
 	rt.buckets[prefixLen].Add(&contact)
@@ -35,25 +36,6 @@ func (rt *RoutingTable) Describe() {
 		rt.buckets[bucket].Describe()
 		fmt.Println("]")
 	}
-}
-
-type Bucket struct {
-	Contacts []*Contact
-}
-
-func (b *Bucket) Describe() {
-	for contact := range b.Contacts {
-		fmt.Printf("Contact %d: ", contact)
-		b.Contacts[contact].Describe()
-	}
-}
-
-func (b *Bucket) Add(contact *Contact) {
-	if len(b.Contacts) >= NodesInBucket {
-		// if this happens we should actually ping each node and remove the slowest from the list instead of the last one
-		b.Contacts = b.Contacts[1:] // pop back item
-	}
-	b.Contacts = append([]*Contact{contact}, b.Contacts...) // push front
 }
 
 type Contact struct {
