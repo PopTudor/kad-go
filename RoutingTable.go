@@ -8,13 +8,13 @@ import (
 const DistanceBuckets = 160
 
 type RoutingTable struct {
-	currentNode NodeID
+	currentNode *Contact
 	// buckets with index closer to 0 store contacts further from the current node because they share less prefix bits
 	// the current node is in the last bucket because shared prefix len is 160
 	buckets [DistanceBuckets]Bucket
 }
 
-func NewRoutingTable(id NodeID) *RoutingTable {
+func NewRoutingTable(id *Contact) *RoutingTable {
 	return &RoutingTable{
 		currentNode: id,
 		buckets:     [DistanceBuckets]Bucket{},
@@ -22,7 +22,7 @@ func NewRoutingTable(id NodeID) *RoutingTable {
 }
 
 func (rt *RoutingTable) Add(contact Contact) {
-	prefixLen := rt.currentNode.SharedPrefixLen(&contact.ID)
+	prefixLen := rt.currentNode.ID.SharedPrefixLen(&contact.ID)
 	if prefixLen == DistanceBuckets {
 		rt.buckets[prefixLen-1].Add(&contact)
 		return
@@ -41,6 +41,17 @@ func (rt *RoutingTable) Describe() {
 type Contact struct {
 	ID NodeID
 	IP net.IPAddr
+}
+
+func NewContact() *Contact {
+	return &Contact{ID: NewNodeID()}
+}
+func NewContactWith(id *NodeID) *Contact {
+	return &Contact{ID: *id}
+}
+
+func NewContactWithIp(id *NodeID, addr net.IPAddr) *Contact {
+	return &Contact{ID: *id, IP: addr}
 }
 
 func (c *Contact) Describe() {

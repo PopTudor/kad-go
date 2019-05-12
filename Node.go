@@ -1,40 +1,42 @@
 package main
 
 type Node struct {
-	ID           NodeID
+	Contact      *Contact
 	RoutingTable *RoutingTable
 	DHT          DHT
 }
 
 func NewNode() *Node {
-	id := NewNodeID()
+	contact := NewContact()
 	return &Node{
-		ID:           id,
-		RoutingTable: NewRoutingTable(id),
+		Contact:      contact,
+		RoutingTable: NewRoutingTable(contact),
 	}
 }
 func NewNodeWithId(id NodeID) *Node {
+	contact := NewContactWith(&id)
 	return &Node{
-		ID:           id,
-		RoutingTable: NewRoutingTable(id),
+		Contact:      contact,
+		RoutingTable: NewRoutingTable(contact),
 	}
 }
 
 // ping a node to find out if is online
-func (n *Node) Ping() {
+func (n *Node) Ping(other *Node) {
+
 }
 
 // call to find a specific node with given id. The recipiend of this call
 // looks in it's own routing table and returns a set of contacts that are closeset to
-// the ID that is being looked up
+// the Contact that is being looked up
 func (n *Node) FindNode(id NodeID) []Contact {
 	return nil
 }
 
-// this call tries to find a specific file ID to be located. If the receiving
-// node finds this ID in it's own DHT segment, it will return the corresponding
+// this call tries to find a specific file Contact to be located. If the receiving
+// node finds this Contact in it's own DHT segment, it will return the corresponding
 // URL. If not, the recipient node returns a list of contacts that are closest
-// to the file ID
+// to the file Contact
 func (n *Node) FindValue(value []byte) *FindValueResponse {
 	return nil
 }
