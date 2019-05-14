@@ -1,5 +1,13 @@
 package main
 
+import (
+	"encoding/binary"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net"
+)
+
 type Node struct {
 	Contact      *Contact
 	RoutingTable *RoutingTable
@@ -7,12 +15,18 @@ type Node struct {
 }
 
 func NewNode() *Node {
-	contact := NewContact()
+	id := NewNodeID()
+	ip, err := net.ResolveTCPAddr("tcp", "127.0.0.1:5443")
+	if err != nil {
+		panic(err)
+	}
+	contact := NewContactWithIp(&id, ip)
 	return &Node{
 		Contact:      contact,
 		RoutingTable: NewRoutingTable(contact),
 	}
 }
+
 func NewNodeWithId(id NodeID) *Node {
 	contact := NewContactWith(&id)
 	return &Node{
@@ -23,6 +37,37 @@ func NewNodeWithId(id NodeID) *Node {
 
 // ping a node to find out if is online
 func (n *Node) Ping(other *Node) {
+	fmt.Println(other.Contact.IP.String())
+	conn, err := net.DialTCP("tcp", nil, other.Contact.IP)
+	if err != nil {
+		panic(err)
+	}
+
+	msg := Message{
+		Type: PING,
+		From: *n.Contact.ID,
+		TO:   *other.Contact.ID,
+	}
+	fmt.Printf("Ping req: (from %s) (to %s) \n", n.Contact.ID.String(), other.Contact.IP.String())
+	pingJson, err := json.Marshal(msg)
+	if err != nil {
+		panic(err)
+	}
+	var num = uint16(len(pingJson))
+
+	err = binary.Write(conn, binary.BigEndian, num)
+	if err != nil {
+		panic(err)
+	}
+	binary.Write(conn, binary.BigEndian, &pingJson)
+
+	success := false
+
+	err = binary.Read(conn, binary.BigEndian, &success)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("Ping resp: %t\n", success)
 
 }
 
@@ -46,6 +91,66 @@ func (n *Node) FindValue(value []byte) *FindValueResponse {
 // own routing table
 func (n *Node) Store(value FileID, contact Contact) {
 
+}
+func (n *Node) Start() {
+	tcpAddr, _ := net.ResolveTCPAddr("tcp", n.Contact.IP.String())
+	ln, err := net.ListenTCP("tcp", tcpAddr)
+	if err != nil {
+		panic(err)
+		// handle error
+	}
+	fmt.Println("start")
+	for {
+		conn, err := ln.Accept()
+		if err != nil {
+			// handle error
+			panic(err)
+		}
+		handleConnection(n, conn)
+	}
+}
+
+func handleConnection(n *Node, conn net.Conn) {
+	defer func() {
+		err := conn.Close()
+		if err != nil {
+			panic(err)
+		}
+	}()
+
+	var msgSize uint16
+	err := binary.Read(conn, binary.BigEndian, &msgSize)
+	if err != nil {
+		err = binary.Write(conn, binary.BigEndian, false)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	data := make([]byte, msgSize)
+	_, err = io.ReadFull(conn, data)
+	if err != nil {
+		err = binary.Write(conn, binary.BigEndian, false)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	msg := &Message{}
+	err = json.Unmarshal(data, msg)
+	if err != nil {
+		err = binary.Write(conn, binary.BigEndian, false)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	fmt.Printf("Recv (from %s / msg %s)\n", msg.From.String(), msg)
+
+	err = binary.Write(conn, binary.BigEndian, true)
+	if err != nil {
+		panic(err)
+	}
 }
 
 /**

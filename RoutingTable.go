@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"net"
 )
 
 const DistanceBuckets = 160
@@ -22,13 +21,14 @@ func NewRoutingTable(id *Contact) *RoutingTable {
 }
 
 func (rt *RoutingTable) Add(contact Contact) {
-	prefixLen := rt.currentNode.ID.SharedPrefixLen(&contact.ID)
+	prefixLen := rt.currentNode.ID.SharedPrefixLen(contact.ID)
 	if prefixLen == DistanceBuckets {
 		rt.buckets[prefixLen-1].Add(&contact)
 		return
 	}
 	rt.buckets[prefixLen].Add(&contact)
 }
+
 func (rt *RoutingTable) Describe() {
 	rt.currentNode.Describe()
 	for bucket := range rt.buckets {
@@ -36,24 +36,4 @@ func (rt *RoutingTable) Describe() {
 		rt.buckets[bucket].Describe()
 		fmt.Println("]")
 	}
-}
-
-type Contact struct {
-	ID NodeID
-	IP net.IPAddr
-}
-
-func NewContact() *Contact {
-	return &Contact{ID: NewNodeID()}
-}
-func NewContactWith(id *NodeID) *Contact {
-	return &Contact{ID: *id}
-}
-
-func NewContactWithIp(id *NodeID, addr net.IPAddr) *Contact {
-	return &Contact{ID: *id, IP: addr}
-}
-
-func (c *Contact) Describe() {
-	fmt.Printf("{%s / %s}", c.ID.String(), c.IP.String())
 }
