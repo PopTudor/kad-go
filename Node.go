@@ -1,11 +1,10 @@
 package main
 
 import (
-	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net"
+	"os"
 )
 
 type Node struct {
@@ -34,14 +33,18 @@ func NewNodeWithId(id NodeID) *Node {
 		RoutingTable: NewRoutingTable(contact),
 	}
 }
+func checkError(err error) {
+	if err != nil {
+		fmt.Println("Fatal error ", err.Error())
+		os.Exit(1)
+	}
+}
 
 // ping a node to find out if is online
 func (n *Node) Ping(other *Node) {
 	fmt.Println(other.Contact.IP.String())
 	conn, err := net.DialTCP("tcp", nil, other.Contact.IP)
-	if err != nil {
-		panic(err)
-	}
+	checkError(err)
 
 	msg := Message{
 		Type: PING,
@@ -49,26 +52,13 @@ func (n *Node) Ping(other *Node) {
 		TO:   *other.Contact.ID,
 	}
 	fmt.Printf("Ping req: (from %s) (to %s) \n", n.Contact.ID.String(), other.Contact.IP.String())
-	pingJson, err := json.Marshal(msg)
-	if err != nil {
-		panic(err)
-	}
-	var num = uint16(len(pingJson))
+	encoder := json.NewEncoder(conn)
+	decoder := json.NewDecoder(conn)
 
-	err = binary.Write(conn, binary.BigEndian, num)
-	if err != nil {
-		panic(err)
-	}
-	binary.Write(conn, binary.BigEndian, &pingJson)
+	encoder.Encode(msg)
+	decoder.Decode(&msg)
 
-	success := false
-
-	err = binary.Read(conn, binary.BigEndian, &success)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Printf("Ping resp: %t\n", success)
-
+	fmt.Printf("Ping resp: %v\n", msg)
 }
 
 // call to find a specific node with given id. The recipiend of this call
@@ -118,39 +108,20 @@ func handleConnection(n *Node, conn net.Conn) {
 		}
 	}()
 
-	var msgSize uint16
-	err := binary.Read(conn, binary.BigEndian, &msgSize)
-	if err != nil {
-		err = binary.Write(conn, binary.BigEndian, false)
-		if err != nil {
-			panic(err)
-		}
-	}
-
-	data := make([]byte, msgSize)
-	_, err = io.ReadFull(conn, data)
-	if err != nil {
-		err = binary.Write(conn, binary.BigEndian, false)
-		if err != nil {
-			panic(err)
-		}
-	}
+	encoder := json.NewEncoder(conn)
+	decoder := json.NewDecoder(conn)
 
 	msg := &Message{}
-	err = json.Unmarshal(data, msg)
-	if err != nil {
-		err = binary.Write(conn, binary.BigEndian, false)
-		if err != nil {
-			panic(err)
-		}
-	}
+	decoder.Decode(&msg)
 
-	fmt.Printf("Recv (from %s / msg %s)\n", msg.From.String(), msg)
+	fmt.Printf("Recv (from %s / msg %s)\n", msg.From, msg.Type)
 
-	err = binary.Write(conn, binary.BigEndian, true)
-	if err != nil {
-		panic(err)
-	}
+	from := msg.From
+	to := msg.TO
+	msg.TO = from
+	msg.From = to
+	msg.Type = PONG
+	encoder.Encode(&msg)
 }
 
 /**

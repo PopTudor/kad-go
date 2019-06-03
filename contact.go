@@ -18,6 +18,7 @@ func NewContact() *Contact {
 	id := NewNodeID()
 	return NewContactWithIp(&id, ip)
 }
+
 func NewContactWith(id *NodeID) *Contact {
 	return &Contact{ID: id}
 }
@@ -27,5 +28,5 @@ func NewContactWithIp(id *NodeID, addr *net.TCPAddr) *Contact {
 }
 
 func (c *Contact) Describe() {
-	fmt.Printf("{%s / %s}", c.ID.String(), c.IP.String())
+	fmt.Printf("{%s / %s}\n", c.ID.String(), c.IP.String())
 }

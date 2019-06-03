@@ -20,13 +20,14 @@ func NewRoutingTable(id *Contact) *RoutingTable {
 	}
 }
 
-func (rt *RoutingTable) Add(contact Contact) {
+func (rt *RoutingTable) Add(contact Contact) uint32 {
 	prefixLen := rt.currentNode.ID.SharedPrefixLen(contact.ID)
-	if prefixLen == DistanceBuckets {
-		rt.buckets[prefixLen-1].Add(&contact)
-		return
+	index := DistanceBuckets - prefixLen
+	if index == DistanceBuckets {
+		index--
 	}
-	rt.buckets[prefixLen].Add(&contact)
+	rt.buckets[index].Add(&contact)
+	return index
 }
 
 func (rt *RoutingTable) Describe() {
