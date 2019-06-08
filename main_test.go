@@ -51,3 +51,29 @@ func TestNode_InValid_NodeId_Ping(t *testing.T) {
 
 	n1.Ping(n3)
 }
+func TestNode_FindNode(t *testing.T) {
+	n1 := NewNode()
+	n2 := NewNode()
+	go n1.Start()
+	go n2.Start()
+	n1.RoutingTable.Add(*n2.NodeId)
+	_, ok := n1.FindNode(*n2)
+	if ok != nil {
+		panic("Nodeid not found in routing table")
+	}
+}
+func TestNode_FindNode_Network(t *testing.T) {
+	n1 := NewNode()
+	n2 := NewNode()
+	n3 := NewNode()
+	go n1.Start()
+	go n2.Start()
+	go n3.Start()
+	n1.RoutingTable.Add(*n2.NodeId)
+	n3.RoutingTable.Add(*n1.NodeId)
+
+	_, err := n3.FindNode(*n2)
+	if err != nil {
+		panic("Nodeid not found in routing table")
+	}
+}

@@ -8,8 +8,15 @@ const DistanceBuckets = 160
 
 type RoutingTable struct {
 	currentNode *NodeId
-	// buckets with index closer to 0 store contacts further from the current node because they share less prefix bits
-	// the current node is in the last bucket because shared prefix len is 160
+	//
+	// buckets with index closer to 0 store contacts closer to the current node.
+	// The indexing is reversed because is a bit easier to thing that a smaller distance is closer to a node.
+	// Nodes that share fewer prefix bits, are further away. Nodes that share many bits, will be closer to 0.
+	// the current node is in the first bucket because shared prefix len is 160 - 160 = 0
+	// The buckets are reversed because a simple xor with many shared bits, will give many shared 0 prefix values
+	// and thus greater indexes e.g. d(00111 ^ 00110) = index(4) and  d(00110 ^ 00110) = index(5) which means
+	// the more bits are shared, the further in the list of buckets the node is put. Doing 160 - 4 or 160 - 5
+	// will give you the opposite and store closer to 0;
 	buckets [DistanceBuckets]Bucket
 }
 
@@ -21,12 +28,16 @@ func NewRoutingTable(id *NodeId) *RoutingTable {
 }
 
 func (rt *RoutingTable) Add(contact NodeId) uint32 {
-	prefixLen := rt.currentNode.ID.SharedPrefixLen(contact.ID)
+	index := bucketIndex(rt.currentNode.DistanceTo(contact))
+	rt.buckets[index].Add(&contact)
+	return index
+}
+
+func bucketIndex(prefixLen uint32) uint32 {
 	index := DistanceBuckets - prefixLen
 	if index == DistanceBuckets {
 		index--
 	}
-	rt.buckets[index].Add(&contact)
 	return index
 }
 
@@ -37,4 +48,9 @@ func (rt *RoutingTable) Describe() {
 		rt.buckets[bucket].Describe()
 		fmt.Println("]")
 	}
+}
+
+func (rt *RoutingTable) Find(id NodeId) Bucket {
+	index := bucketIndex(rt.currentNode.DistanceTo(id))
+	return rt.buckets[index]
 }

@@ -31,3 +31,16 @@ func (b *Bucket) Pop() {
 func (b *Bucket) PushFront(contact *NodeId) {
 	b.Contacts = append([]*NodeId{contact}, b.Contacts...)
 }
+
+func (b *Bucket) IndexOf(id NodeId) int16 {
+	for i := 0; i < len(b.Contacts); i++ {
+		if b.Contacts[i].ID == id.ID {
+			return int16(i)
+		}
+	}
+	return -1
+}
+
+func (b *Bucket) Get(i int16) NodeId {
+	return *b.Contacts[i]
+}

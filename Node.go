@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math/rand"
 	"net"
@@ -115,8 +116,14 @@ func (n *Node) Ping(other *Node) {
 // call to find a specific node with given id. The recipiend of this call
 // looks in it's own routing table and returns a set of contacts that are closeset to
 // the NodeId that is being looked up
-func (n *Node) FindNode(id Id) []NodeId {
-	return nil
+func (n *Node) FindNode(node Node) (*NodeId, error) {
+	bucket := n.RoutingTable.Find(*node.NodeId)
+	nodeIndex := bucket.IndexOf(*node.NodeId)
+	if nodeIndex != -1 {
+		get := bucket.Get(nodeIndex)
+		return &get, nil
+	}
+	return nil, errors.New("Node not found")
 }
 
 // this call tries to find a specific file NodeId to be located. If the receiving

@@ -30,6 +30,7 @@ func NewNodeIdFrom(str string) Id {
 
 // More shared bit pre-fix means closer distance between node ids
 // This shared prefix will give leading zeros after the xor operation is done
+//
 // 0 xor 0 = 0
 // 0 xor 1 = 1
 // 1 xor 0 = 1
