@@ -34,10 +34,20 @@ func TestBasic(t *testing.T) {
 
 }
 
-func TestNode_Ping(t *testing.T) {
+func TestNode_Valid_NodeId_Ping(t *testing.T) {
 	n1 := NewNode()
 	n2 := NewNode()
 	go n1.Start()
 
 	n2.Ping(n1)
+}
+func TestNode_InValid_NodeId_Ping(t *testing.T) {
+	n1 := NewNode()
+	n2 := NewNode()
+	n3 := NewNode()
+	go n1.Start()
+	go n2.Start()
+	go n3.Start()
+
+	n1.Ping(n3)
 }

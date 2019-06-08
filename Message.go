@@ -28,8 +28,8 @@ func (e MessageType) String() string {
 
 type Message struct {
 	Type     MessageType `json:"type"`
-	From     Id          `json:"from"`
 	TO       Id          `json:"to"`
+	From     Id          `json:"from"`
 	FileHash string      `json:"file_hash"`
 	Contacts []NodeId    `json:"contacts"`
 }

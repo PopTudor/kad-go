@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"net"
 	"os"
 )
@@ -15,7 +16,9 @@ type Node struct {
 
 func NewNode() *Node {
 	id := NewNodeID()
-	ip, err := net.ResolveTCPAddr("tcp", "127.0.0.1:5443")
+	port := rand.Intn(65535) + 10.000
+	address := fmt.Sprintf("127.0.0.1:%d", port)
+	ip, err := net.ResolveTCPAddr("tcp", address)
 	if err != nil {
 		panic(err)
 	}
@@ -84,6 +87,7 @@ func handleConnection(n *Node, conn net.Conn) {
 	msg.TO = from
 	msg.From = to
 	msg.Type = PONG
+	fmt.Printf("%s >>> %s \n", n, msg)
 	encoder.Encode(&msg)
 }
 
