@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"net"
-	"sync"
 	"testing"
 )
 
@@ -25,7 +24,7 @@ func TestBasic(t *testing.T) {
 	ids := NewNodeID()
 	c2 := NewContactWithIp(&ids, ip)
 
-	c3 := NewContactWith(no1.Contact.ID)
+	c3 := NewContactWith(no1.NodeId.ID)
 
 	no1.RoutingTable.Add(*c1)
 	no1.RoutingTable.Add(*c2)
@@ -38,14 +37,7 @@ func TestBasic(t *testing.T) {
 func TestNode_Ping(t *testing.T) {
 	n1 := NewNode()
 	n2 := NewNode()
-	w := sync.WaitGroup{}
-	w.Add(1)
-	go func() {
-		n1.Start()
-	}()
-	go func() {
-		n2.Ping(n1)
-		w.Done()
-	}()
-	w.Wait()
+	go n1.Start()
+
+	n2.Ping(n1)
 }

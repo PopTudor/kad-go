@@ -8,7 +8,7 @@ import (
 )
 
 type Node struct {
-	Contact      *Contact
+	NodeId       *NodeId
 	RoutingTable *RoutingTable
 	DHT          DHT
 }
@@ -21,75 +21,26 @@ func NewNode() *Node {
 	}
 	contact := NewContactWithIp(&id, ip)
 	return &Node{
-		Contact:      contact,
+		NodeId:       contact,
 		RoutingTable: NewRoutingTable(contact),
 	}
 }
 
-func NewNodeWithId(id NodeID) *Node {
+func NewNodeWithId(id Id) *Node {
 	contact := NewContactWith(&id)
 	return &Node{
-		Contact:      contact,
+		NodeId:       contact,
 		RoutingTable: NewRoutingTable(contact),
 	}
 }
-func checkError(err error) {
-	if err != nil {
-		fmt.Println("Fatal error ", err.Error())
-		os.Exit(1)
-	}
-}
-
-// ping a node to find out if is online
-func (n *Node) Ping(other *Node) {
-	fmt.Println(other.Contact.IP.String())
-	conn, err := net.DialTCP("tcp", nil, other.Contact.IP)
-	checkError(err)
-
-	msg := Message{
-		Type: PING,
-		From: *n.Contact.ID,
-		TO:   *other.Contact.ID,
-	}
-	fmt.Printf("Ping req: (from %s) (to %s) \n", n.Contact.ID.String(), other.Contact.IP.String())
-	encoder := json.NewEncoder(conn)
-	decoder := json.NewDecoder(conn)
-
-	encoder.Encode(msg)
-	decoder.Decode(&msg)
-
-	fmt.Printf("Ping resp: %v\n", msg)
-}
-
-// call to find a specific node with given id. The recipiend of this call
-// looks in it's own routing table and returns a set of contacts that are closeset to
-// the Contact that is being looked up
-func (n *Node) FindNode(id NodeID) []Contact {
-	return nil
-}
-
-// this call tries to find a specific file Contact to be located. If the receiving
-// node finds this Contact in it's own DHT segment, it will return the corresponding
-// URL. If not, the recipient node returns a list of contacts that are closest
-// to the file Contact
-func (n *Node) FindValue(value []byte) *FindValueResponse {
-	return nil
-}
-
-// This call is used to store a key/value pair(fileID,location) in the DHT segment of the recipient node
-// Upon each successful RPC, both the sending/receiving node insert/update each other's contact info in their
-// own routing table
-func (n *Node) Store(value FileID, contact Contact) {
-
-}
 func (n *Node) Start() {
-	tcpAddr, _ := net.ResolveTCPAddr("tcp", n.Contact.IP.String())
+	tcpAddr, _ := net.ResolveTCPAddr("tcp", n.NodeId.IP.String())
 	ln, err := net.ListenTCP("tcp", tcpAddr)
 	if err != nil {
 		panic(err)
 		// handle error
 	}
-	fmt.Println("start")
+	fmt.Printf("start %s\n", n)
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
@@ -97,6 +48,13 @@ func (n *Node) Start() {
 			panic(err)
 		}
 		handleConnection(n, conn)
+	}
+}
+
+func checkError(err error) {
+	if err != nil {
+		fmt.Println("Fatal error ", err.Error())
+		os.Exit(1)
 	}
 }
 
@@ -111,10 +69,15 @@ func handleConnection(n *Node, conn net.Conn) {
 	encoder := json.NewEncoder(conn)
 	decoder := json.NewDecoder(conn)
 
-	msg := &Message{}
+	msg := Message{}
 	decoder.Decode(&msg)
 
-	fmt.Printf("Recv (from %s / msg %s)\n", msg.From, msg.Type)
+	if msg.TO != *n.NodeId.ID {
+		fmt.Println("Ignored. Not targeted node")
+		return
+	}
+
+	fmt.Printf("%s <<< %s \n", n, msg)
 
 	from := msg.From
 	to := msg.TO
@@ -124,10 +87,57 @@ func handleConnection(n *Node, conn net.Conn) {
 	encoder.Encode(&msg)
 }
 
+// ping a node to find out if is online
+func (n *Node) Ping(other *Node) {
+	fmt.Println(other.NodeId.IP.String())
+	conn, err := net.DialTCP("tcp", nil, other.NodeId.IP)
+	checkError(err)
+
+	msg := Message{
+		Type: PING,
+		From: *n.NodeId.ID,
+		TO:   *other.NodeId.ID,
+	}
+	fmt.Printf("%s >>> %s\n", n, msg)
+	encoder := json.NewEncoder(conn)
+	decoder := json.NewDecoder(conn)
+
+	encoder.Encode(msg)
+	decoder.Decode(&msg)
+
+	fmt.Printf("%s <<< %s\n", n, msg)
+}
+
+// call to find a specific node with given id. The recipiend of this call
+// looks in it's own routing table and returns a set of contacts that are closeset to
+// the NodeId that is being looked up
+func (n *Node) FindNode(id Id) []NodeId {
+	return nil
+}
+
+// this call tries to find a specific file NodeId to be located. If the receiving
+// node finds this NodeId in it's own DHT segment, it will return the corresponding
+// URL. If not, the recipient node returns a list of contacts that are closest
+// to the file NodeId
+func (n *Node) FindValue(value []byte) *FindValueResponse {
+	return nil
+}
+
+// This call is used to store a key/value pair(fileID,location) in the DHT segment of the recipient node
+// Upon each successful RPC, both the sending/receiving node insert/update each other's contact info in their
+// own routing table
+func (n *Node) Store(value FileID, contact NodeId) {
+
+}
+
+func (n *Node) String() string {
+	return fmt.Sprintf("%s", n.NodeId)
+}
+
 /**
  *
  */
 type FindValueResponse struct {
 	ValueFound Segment
-	Contacts   []Contact
+	Contacts   []NodeId
 }

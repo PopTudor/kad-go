@@ -5,12 +5,12 @@ import (
 	"net"
 )
 
-type Contact struct {
-	ID *NodeID
+type NodeId struct {
+	ID *Id
 	IP *net.TCPAddr
 }
 
-func NewContact() *Contact {
+func NewContact() *NodeId {
 	ip, err := net.ResolveTCPAddr("tcp", ":5443")
 	if err != nil {
 		panic(err)
@@ -19,14 +19,17 @@ func NewContact() *Contact {
 	return NewContactWithIp(&id, ip)
 }
 
-func NewContactWith(id *NodeID) *Contact {
-	return &Contact{ID: id}
+func NewContactWith(id *Id) *NodeId {
+	return &NodeId{ID: id}
 }
 
-func NewContactWithIp(id *NodeID, addr *net.TCPAddr) *Contact {
-	return &Contact{ID: id, IP: addr}
+func NewContactWithIp(id *Id, addr *net.TCPAddr) *NodeId {
+	return &NodeId{ID: id, IP: addr}
 }
 
-func (c *Contact) Describe() {
-	fmt.Printf("{%s / %s}\n", c.ID.String(), c.IP.String())
+func (c *NodeId) Describe() {
+	fmt.Printf("%s", c)
+}
+func (c *NodeId) String() string {
+	return fmt.Sprintf("{%s / %s}", c.ID.StringHex(), c.IP.String())
 }
