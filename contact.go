@@ -6,7 +6,7 @@ import (
 )
 
 type NodeId struct {
-	ID *Id
+	ID Id
 	IP *net.TCPAddr
 }
 
@@ -16,14 +16,14 @@ func NewContact() *NodeId {
 		panic(err)
 	}
 	id := NewNodeID()
-	return NewContactWithIp(&id, ip)
+	return NewContactWithIp(id, ip)
 }
 
-func NewContactWith(id *Id) *NodeId {
+func NewContactWith(id Id) *NodeId {
 	return &NodeId{ID: id}
 }
 
-func NewContactWithIp(id *Id, addr *net.TCPAddr) *NodeId {
+func NewContactWithIp(id Id, addr *net.TCPAddr) *NodeId {
 	return &NodeId{ID: id, IP: addr}
 }
 

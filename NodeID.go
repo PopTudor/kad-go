@@ -44,7 +44,7 @@ func NewNodeIdFrom(str string) Id {
 // the distance would have been greater
 // Notice that the longer the shared sequence of bits is, the more zeroes we have
 // in the resulting number
-func (nid *Id) SharedPrefixLen(oid *Id) uint32 {
+func (nid *Id) SharedPrefixLen(oid Id) uint32 {
 	prefix := 0
 	for i := 0; i < NodeLen; i++ {
 		xor := nid[i] ^ oid[i]

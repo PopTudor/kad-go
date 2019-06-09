@@ -23,7 +23,7 @@ func NewNode() *Node {
 	if err != nil {
 		panic(err)
 	}
-	contact := NewContactWithIp(&id, ip)
+	contact := NewContactWithIp(id, ip)
 	return &Node{
 		NodeId:       contact,
 		RoutingTable: NewRoutingTable(contact),
@@ -31,7 +31,7 @@ func NewNode() *Node {
 }
 
 func NewNodeWithId(id Id) *Node {
-	contact := NewContactWith(&id)
+	contact := NewContactWith(id)
 	return &Node{
 		NodeId:       contact,
 		RoutingTable: NewRoutingTable(contact),
@@ -51,7 +51,7 @@ func (n *Node) Start() {
 			// handle error
 			panic(err)
 		}
-		handleConnection(n, conn)
+		n.handleConnection(conn)
 	}
 }
 
@@ -62,7 +62,7 @@ func checkError(err error) {
 	}
 }
 
-func handleConnection(n *Node, conn net.Conn) {
+func (n *Node) handleConnection(conn net.Conn) {
 	defer func() {
 		err := conn.Close()
 		if err != nil {
@@ -76,18 +76,23 @@ func handleConnection(n *Node, conn net.Conn) {
 	msg := Message{}
 	decoder.Decode(&msg)
 
-	if msg.TO != *n.NodeId.ID {
+	if msg.TO != n.NodeId.ID {
 		fmt.Println("Ignored. Not targeted node")
 		return
 	}
-
 	fmt.Printf("%s <<< %s \n", n, msg)
 
 	from := msg.From
 	to := msg.TO
 	msg.TO = from
 	msg.From = to
-	msg.Type = PONG
+	switch msg.Type {
+	case PING:
+		msg.Type = PONG
+	case FIND_NODE:
+		msg.Bucket = n.RoutingTable.FindClosestBucketById(msg.FindId)
+	}
+
 	fmt.Printf("%s >>> %s \n", n, msg)
 	encoder.Encode(&msg)
 }
@@ -100,8 +105,8 @@ func (n *Node) Ping(other *Node) {
 
 	msg := Message{
 		Type: PING,
-		From: *n.NodeId.ID,
-		TO:   *other.NodeId.ID,
+		From: n.NodeId.ID,
+		TO:   other.NodeId.ID,
 	}
 	fmt.Printf("%s >>> %s\n", n, msg)
 	encoder := json.NewEncoder(conn)
@@ -116,12 +121,18 @@ func (n *Node) Ping(other *Node) {
 // call to find a specific node with given id. The recipiend of this call
 // looks in it's own routing table and returns a set of contacts that are closeset to
 // the NodeId that is being looked up
-func (n *Node) FindNode(node Node) (*NodeId, error) {
-	bucket := n.RoutingTable.Find(*node.NodeId)
-	nodeIndex := bucket.IndexOf(*node.NodeId)
-	if nodeIndex != -1 {
+func (n *Node) FindNode(node *Node) (*NodeId, error) {
+	bucket := n.RoutingTable.FindClosestBucket(node.NodeId)
+	hasNode, nodeIndex := bucket.Has(*node.NodeId)
+	if hasNode {
 		get := bucket.Get(nodeIndex)
 		return &get, nil
+	} else {
+		found, err := n.findNodeRemote(*node, bucket)
+		if err == nil {
+			n.RoutingTable.Add(*found)
+		}
+		return found, err
 	}
 	return nil, errors.New("Node not found")
 }
@@ -143,6 +154,42 @@ func (n *Node) Store(value FileID, contact NodeId) {
 
 func (n *Node) String() string {
 	return fmt.Sprintf("%s", n.NodeId)
+}
+
+func (n *Node) findNodeRemote(searchedNode Node, bucket Bucket) (*NodeId, error) {
+	has, _ := bucket.Has(*n.NodeId)
+	if has {
+		return nil, errors.New("Node not found at remote nodes")
+	}
+
+	for _, item := range bucket.Contacts {
+		conn, err := net.DialTCP("tcp", nil, item.IP)
+		checkError(err)
+
+		msg := Message{
+			Type:   FIND_NODE,
+			From:   n.NodeId.ID,
+			TO:     item.ID,
+			FindId: searchedNode.NodeId.ID,
+		}
+		fmt.Printf("%s >>> %s\n", n, msg)
+		encoder := json.NewEncoder(conn)
+		decoder := json.NewDecoder(conn)
+
+		encoder.Encode(msg)
+		decoder.Decode(&msg)
+
+		fmt.Printf("%s <<< %s\n", n, msg)
+
+		hasNode, index := msg.Bucket.Has(*searchedNode.NodeId)
+		if hasNode {
+			node := msg.Bucket.Get(index)
+			return &node, nil
+		} else {
+			continue
+		}
+	}
+	return nil, errors.New("Node not found or not in the network")
 }
 
 /**

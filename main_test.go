@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net"
+	"sync"
 	"testing"
 )
 
@@ -12,17 +13,17 @@ func TestBasic(t *testing.T) {
 	n1.DescribeBinary()
 	n2.DescribeBinary()
 
-	len1 := n1.SharedPrefixLen(&n2)
-	len2 := n2.SharedPrefixLen(&n1)
+	len1 := n1.SharedPrefixLen(n2)
+	len2 := n2.SharedPrefixLen(n1)
 	if len1 != len2 {
 		t.Error("Commutative property has failed. A+B = B+A")
 	}
 	fmt.Printf("%d", len1)
 	ip, _ := net.ResolveTCPAddr("tcp", ":5433")
 	no1 := NewNode()
-	c1 := NewContactWith(&n1)
+	c1 := NewContactWith(n1)
 	ids := NewNodeID()
-	c2 := NewContactWithIp(&ids, ip)
+	c2 := NewContactWithIp(ids, ip)
 
 	c3 := NewContactWith(no1.NodeId.ID)
 
@@ -57,7 +58,7 @@ func TestNode_FindNode(t *testing.T) {
 	go n1.Start()
 	go n2.Start()
 	n1.RoutingTable.Add(*n2.NodeId)
-	_, ok := n1.FindNode(*n2)
+	_, ok := n1.FindNode(n2)
 	if ok != nil {
 		panic("Nodeid not found in routing table")
 	}
@@ -66,14 +67,31 @@ func TestNode_FindNode_Network(t *testing.T) {
 	n1 := NewNode()
 	n2 := NewNode()
 	n3 := NewNode()
-	go n1.Start()
-	go n2.Start()
-	go n3.Start()
+	w := sync.WaitGroup{}
+	w.Add(1)
+	w.Add(1)
+	w.Add(1)
+	go func() {
+		w.Done()
+		n1.Start()
+	}()
+	go func() {
+		w.Done()
+		n2.Start()
+	}()
+	go func() {
+		w.Done()
+		n3.Start()
+	}()
 	n1.RoutingTable.Add(*n2.NodeId)
 	n3.RoutingTable.Add(*n1.NodeId)
 
-	_, err := n3.FindNode(*n2)
+	w.Wait()
+	foundNode, err := n3.FindNode(n2)
 	if err != nil {
 		panic("Nodeid not found in routing table")
+	}
+	if foundNode.ID != n2.NodeId.ID {
+		panic("found wrong node")
 	}
 }

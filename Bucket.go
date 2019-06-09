@@ -32,15 +32,22 @@ func (b *Bucket) PushFront(contact *NodeId) {
 	b.Contacts = append([]*NodeId{contact}, b.Contacts...)
 }
 
-func (b *Bucket) IndexOf(id NodeId) int16 {
-	for i := 0; i < len(b.Contacts); i++ {
-		if b.Contacts[i].ID == id.ID {
-			return int16(i)
+func (b *Bucket) Has(id NodeId) (bool, int16) {
+	if b.Contacts == nil {
+		return false, -1
+	}
+	for i, contact := range b.Contacts {
+		if contact.ID == id.ID {
+			return true, int16(i)
 		}
 	}
-	return -1
+	return false, -1
 }
 
 func (b *Bucket) Get(i int16) NodeId {
 	return *b.Contacts[i]
+}
+
+func (b *Bucket) IsEmpty() bool {
+	return len(b.Contacts) == 0
 }

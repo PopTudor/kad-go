@@ -50,7 +50,17 @@ func (rt *RoutingTable) Describe() {
 	}
 }
 
-func (rt *RoutingTable) Find(id NodeId) Bucket {
-	index := bucketIndex(rt.currentNode.DistanceTo(id))
+func (rt *RoutingTable) FindClosestBucket(id *NodeId) Bucket {
+	index := bucketIndex(rt.currentNode.DistanceTo(*id))
+	for rt.buckets[index].IsEmpty() && index > 0 {
+		index--
+	}
+	return rt.buckets[index]
+}
+func (rt *RoutingTable) FindClosestBucketById(id Id) Bucket {
+	index := bucketIndex(rt.currentNode.ID.SharedPrefixLen(id))
+	for rt.buckets[index].IsEmpty() && index > 0 {
+		index--
+	}
 	return rt.buckets[index]
 }
