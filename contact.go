@@ -27,7 +27,7 @@ func NewContactWithIp(id Id, addr *net.TCPAddr) *NodeId {
 	return &NodeId{ID: id, IP: addr}
 }
 
-func (c *NodeId) DistanceTo(id NodeId) uint32 {
+func (c *NodeId) DistanceTo(id *NodeId) uint32 {
 	return c.ID.SharedPrefixLen(id.ID)
 }
 

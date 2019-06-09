@@ -51,3 +51,7 @@ func (b *Bucket) Get(i int16) NodeId {
 func (b *Bucket) IsEmpty() bool {
 	return len(b.Contacts) == 0
 }
+
+func (b *Bucket) LastNode() NodeId {
+	return *b.Contacts[len(b.Contacts)-1]
+}

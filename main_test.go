@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"net"
-	"sync"
 	"testing"
 )
 
@@ -27,9 +26,9 @@ func TestBasic(t *testing.T) {
 
 	c3 := NewContactWith(no1.NodeId.ID)
 
-	no1.RoutingTable.Add(*c1)
-	no1.RoutingTable.Add(*c2)
-	no1.RoutingTable.Add(*c3)
+	no1.RoutingTable.Add(c1)
+	no1.RoutingTable.Add(c2)
+	no1.RoutingTable.Add(c3)
 	//no1.RoutingTable.Describe()
 	fmt.Println()
 
@@ -57,41 +56,57 @@ func TestNode_FindNode(t *testing.T) {
 	n2 := NewNode()
 	go n1.Start()
 	go n2.Start()
-	n1.RoutingTable.Add(*n2.NodeId)
-	_, ok := n1.FindNode(n2)
+	n1.RoutingTable.Add(n2.NodeId)
+	_, ok := n1.FindNode(*n2.NodeId)
 	if ok != nil {
 		panic("Nodeid not found in routing table")
 	}
 }
 func TestNode_FindNode_Network(t *testing.T) {
 	n1 := NewNode()
-	n2 := NewNode()
-	n3 := NewNode()
-	w := sync.WaitGroup{}
-	w.Add(1)
-	w.Add(1)
-	w.Add(1)
-	go func() {
-		w.Done()
-		n1.Start()
-	}()
-	go func() {
-		w.Done()
-		n2.Start()
-	}()
-	go func() {
-		w.Done()
-		n3.Start()
-	}()
-	n1.RoutingTable.Add(*n2.NodeId)
-	n3.RoutingTable.Add(*n1.NodeId)
+	go n1.Start()
 
-	w.Wait()
-	foundNode, err := n3.FindNode(n2)
+	n2 := NewNode()
+	go n2.Start()
+
+	n3 := NewNode()
+	go n3.Start()
+
+	n1.RoutingTable.Add(n2.NodeId)
+	n3.RoutingTable.Add(n1.NodeId)
+
+	foundNode, err := n3.FindNode(*n2.NodeId)
 	if err != nil {
 		panic("Nodeid not found in routing table")
 	}
 	if foundNode.ID != n2.NodeId.ID {
 		panic("found wrong node")
 	}
+}
+
+func TestNode_FindNodeRecursive(t *testing.T) {
+	a := NewNode()
+	go a.Start()
+
+	n1 := NewNode()
+	go n1.Start()
+
+	a.RoutingTable.Add(n1.NodeId)
+
+	for i := 0; i < 128; i++ {
+		n := NewNode()
+		go n.Start()
+		n1.RoutingTable.Add(n.NodeId)
+	}
+
+	lastBucket := n1.RoutingTable.LastBucket()
+	lastNode := lastBucket.LastNode()
+	found, err := a.FindNode(lastNode)
+	if err != nil {
+		panic("Last node not found ")
+	}
+	if found.ID != lastNode.ID {
+		panic("Found wrong node")
+	}
+
 }

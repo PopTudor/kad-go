@@ -27,9 +27,9 @@ func NewRoutingTable(id *NodeId) *RoutingTable {
 	}
 }
 
-func (rt *RoutingTable) Add(contact NodeId) uint32 {
+func (rt *RoutingTable) Add(contact *NodeId) uint32 {
 	index := bucketIndex(rt.currentNode.DistanceTo(contact))
-	rt.buckets[index].Add(&contact)
+	rt.buckets[index].Add(contact)
 	return index
 }
 
@@ -51,7 +51,7 @@ func (rt *RoutingTable) Describe() {
 }
 
 func (rt *RoutingTable) FindClosestBucket(id *NodeId) Bucket {
-	index := bucketIndex(rt.currentNode.DistanceTo(*id))
+	index := bucketIndex(rt.currentNode.DistanceTo(id))
 	for rt.buckets[index].IsEmpty() && index > 0 {
 		index--
 	}
@@ -63,4 +63,8 @@ func (rt *RoutingTable) FindClosestBucketById(id Id) Bucket {
 		index--
 	}
 	return rt.buckets[index]
+}
+
+func (rt *RoutingTable) LastBucket() Bucket {
+	return rt.buckets[len(rt.buckets)-1]
 }

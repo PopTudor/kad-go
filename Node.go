@@ -29,6 +29,23 @@ func NewNode() *Node {
 		RoutingTable: NewRoutingTable(contact),
 	}
 }
+func NewNodeWithPort(port uint16) *Node {
+	if port > 65535 {
+		panic("Port too big")
+	}
+	id := NewNodeID()
+
+	address := fmt.Sprintf("127.0.0.1:%d", port)
+	ip, err := net.ResolveTCPAddr("tcp", address)
+	if err != nil {
+		panic(err)
+	}
+	contact := NewContactWithIp(id, ip)
+	return &Node{
+		NodeId:       contact,
+		RoutingTable: NewRoutingTable(contact),
+	}
+}
 
 func NewNodeWithId(id Id) *Node {
 	contact := NewContactWith(id)
@@ -121,16 +138,16 @@ func (n *Node) Ping(other *Node) {
 // call to find a specific node with given id. The recipiend of this call
 // looks in it's own routing table and returns a set of contacts that are closeset to
 // the NodeId that is being looked up
-func (n *Node) FindNode(node *Node) (*NodeId, error) {
-	bucket := n.RoutingTable.FindClosestBucket(node.NodeId)
-	hasNode, nodeIndex := bucket.Has(*node.NodeId)
+func (n *Node) FindNode(node NodeId) (*NodeId, error) {
+	bucket := n.RoutingTable.FindClosestBucket(&node)
+	hasNode, nodeIndex := bucket.Has(node)
 	if hasNode {
 		get := bucket.Get(nodeIndex)
 		return &get, nil
 	} else {
-		found, err := n.findNodeRemote(*node, bucket)
+		found, err := n.findNodeRemote(node, bucket)
 		if err == nil {
-			n.RoutingTable.Add(*found)
+			n.RoutingTable.Add(found)
 		}
 		return found, err
 	}
@@ -156,7 +173,7 @@ func (n *Node) String() string {
 	return fmt.Sprintf("%s", n.NodeId)
 }
 
-func (n *Node) findNodeRemote(searchedNode Node, bucket Bucket) (*NodeId, error) {
+func (n *Node) findNodeRemote(searchedNode NodeId, bucket Bucket) (*NodeId, error) {
 	has, _ := bucket.Has(*n.NodeId)
 	if has {
 		return nil, errors.New("Node not found at remote nodes")
@@ -170,7 +187,7 @@ func (n *Node) findNodeRemote(searchedNode Node, bucket Bucket) (*NodeId, error)
 			Type:   FIND_NODE,
 			From:   n.NodeId.ID,
 			TO:     item.ID,
-			FindId: searchedNode.NodeId.ID,
+			FindId: searchedNode.ID,
 		}
 		fmt.Printf("%s >>> %s\n", n, msg)
 		encoder := json.NewEncoder(conn)
@@ -181,10 +198,12 @@ func (n *Node) findNodeRemote(searchedNode Node, bucket Bucket) (*NodeId, error)
 
 		fmt.Printf("%s <<< %s\n", n, msg)
 
-		hasNode, index := msg.Bucket.Has(*searchedNode.NodeId)
+		hasNode, index := msg.Bucket.Has(searchedNode)
 		if hasNode {
 			node := msg.Bucket.Get(index)
 			return &node, nil
+		} else if !msg.Bucket.IsEmpty() {
+			return n.findNodeRemote(searchedNode, msg.Bucket)
 		} else {
 			continue
 		}
