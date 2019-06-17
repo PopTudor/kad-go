@@ -23,9 +23,13 @@ func NewNodeID() Id {
 	return Id(token)
 }
 func NewNodeIdFrom(str string) Id {
-	var token [NodeLen]byte
-	copy(token[:], str)
-	return Id(token)
+	token := str
+	for i := len(str); i < NodeLen; i++ {
+		token += str
+	}
+	var res [NodeLen]byte
+	copy(res[:], token)
+	return Id(res)
 }
 
 // More shared bit pre-fix means closer distance between node ids

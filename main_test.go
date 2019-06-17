@@ -85,7 +85,7 @@ func TestNode_FindNode_Network(t *testing.T) {
 }
 
 func TestNode_FindNodeRecursive(t *testing.T) {
-	a := NewNode()
+	a := NewNodeWithId(NewNodeIdFrom("0"))
 	go a.Start()
 
 	n1 := NewNode()
@@ -93,7 +93,7 @@ func TestNode_FindNodeRecursive(t *testing.T) {
 
 	a.RoutingTable.Add(n1.NodeId)
 
-	for i := 0; i < 128; i++ {
+	for i := 0; i < 128/8; i++ {
 		n := NewNode()
 		go n.Start()
 		n1.RoutingTable.Add(n.NodeId)
@@ -101,12 +101,21 @@ func TestNode_FindNodeRecursive(t *testing.T) {
 
 	lastBucket := n1.RoutingTable.LastBucket()
 	lastNode := lastBucket.LastNode()
-	found, err := a.FindNode(lastNode)
-	if err != nil {
-		panic("Last node not found ")
-	}
-	if found.ID != lastNode.ID {
-		panic("Found wrong node")
+
+	if found, err := a.FindNode(lastNode); err == nil {
+		if found.ID != lastNode.ID {
+			t.Fatal("Found wrong node")
+		}
+	} else {
+		t.Fatal("Last node not found ")
 	}
 
+	firstNode := lastBucket.Get(0)
+	if found, err := a.FindNode(firstNode); err == nil {
+		if found.ID != firstNode.ID {
+			t.Fatal("found wrong node")
+		}
+	} else {
+		t.Fatal(err)
+	}
 }

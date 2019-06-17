@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"net"
 )
 
@@ -10,8 +11,15 @@ type NodeId struct {
 	IP *net.TCPAddr
 }
 
+func newRandomPort() int {
+	port := rand.Intn(65535) + 10.000
+	return port
+}
+
 func NewContact() *NodeId {
-	ip, err := net.ResolveTCPAddr("tcp", ":5443")
+	port := newRandomPort()
+	address := fmt.Sprintf("127.0.0.1:%d", port)
+	ip, err := net.ResolveTCPAddr("tcp", address)
 	if err != nil {
 		panic(err)
 	}
@@ -20,7 +28,9 @@ func NewContact() *NodeId {
 }
 
 func NewContactWith(id Id) *NodeId {
-	return &NodeId{ID: id}
+	n := NewContact()
+	n.ID = id
+	return n
 }
 
 func NewContactWithIp(id Id, addr *net.TCPAddr) *NodeId {

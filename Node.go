@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"math/rand"
 	"net"
 	"os"
 )
@@ -17,18 +16,13 @@ type Node struct {
 
 func NewNode() *Node {
 	id := NewNodeID()
-	port := rand.Intn(65535) + 10.000
-	address := fmt.Sprintf("127.0.0.1:%d", port)
-	ip, err := net.ResolveTCPAddr("tcp", address)
-	if err != nil {
-		panic(err)
-	}
-	contact := NewContactWithIp(id, ip)
+	contact := NewContactWith(id)
 	return &Node{
 		NodeId:       contact,
 		RoutingTable: NewRoutingTable(contact),
 	}
 }
+
 func NewNodeWithPort(port uint16) *Node {
 	if port > 65535 {
 		panic("Port too big")
@@ -48,12 +42,12 @@ func NewNodeWithPort(port uint16) *Node {
 }
 
 func NewNodeWithId(id Id) *Node {
-	contact := NewContactWith(id)
-	return &Node{
-		NodeId:       contact,
-		RoutingTable: NewRoutingTable(contact),
-	}
+	nodeId := NewContactWith(id)
+	n := NewNode()
+	n.NodeId = nodeId
+	return n
 }
+
 func (n *Node) Start() {
 	tcpAddr, _ := net.ResolveTCPAddr("tcp", n.NodeId.IP.String())
 	ln, err := net.ListenTCP("tcp", tcpAddr)
