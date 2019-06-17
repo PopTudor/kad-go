@@ -21,10 +21,12 @@ type RoutingTable struct {
 }
 
 func NewRoutingTable(id *NodeId) *RoutingTable {
-	return &RoutingTable{
+	rt := &RoutingTable{
 		currentNode: id,
 		buckets:     [DistanceBuckets]Bucket{},
 	}
+	rt.Add(id)
+	return rt
 }
 
 func (rt *RoutingTable) Add(contact *NodeId) uint32 {
@@ -57,8 +59,8 @@ func (rt *RoutingTable) FindClosestBucket(id *NodeId) Bucket {
 	}
 	return rt.buckets[index]
 }
-func (rt *RoutingTable) FindClosestBucketById(id Id) Bucket {
-	index := bucketIndex(rt.currentNode.ID.SharedPrefixLen(id))
+func (rt *RoutingTable) FindClosestBucketById(id Key) Bucket {
+	index := bucketIndex(rt.currentNode.key.SharedPrefixLen(id))
 	for rt.buckets[index].IsEmpty() && index > 0 {
 		index--
 	}
@@ -66,5 +68,14 @@ func (rt *RoutingTable) FindClosestBucketById(id Id) Bucket {
 }
 
 func (rt *RoutingTable) LastBucket() Bucket {
+	return rt.buckets[len(rt.buckets)-1]
+}
+
+func (rt *RoutingTable) LastNotEmptyBucket() Bucket {
+	for i := DistanceBuckets - 1; i > 0; i-- {
+		if !rt.buckets[i].IsEmpty() {
+			return rt.buckets[i]
+		}
+	}
 	return rt.buckets[len(rt.buckets)-1]
 }

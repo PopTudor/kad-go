@@ -7,8 +7,8 @@ import (
 )
 
 func TestBasic(t *testing.T) {
-	n1 := NewNodeID()
-	n2 := NewNodeID()
+	n1 := NewNodeKey()
+	n2 := NewNodeKey()
 	n1.DescribeBinary()
 	n2.DescribeBinary()
 
@@ -20,15 +20,15 @@ func TestBasic(t *testing.T) {
 	fmt.Printf("%d", len1)
 	ip, _ := net.ResolveTCPAddr("tcp", ":5433")
 	no1 := NewNode()
-	c1 := NewContactWith(n1)
-	ids := NewNodeID()
-	c2 := NewContactWithIp(ids, ip)
+	c1 := NewNodeIdWith(n1)
+	ids := NewNodeKey()
+	c2 := NewNodeIdWithIp(ids, ip)
 
-	c3 := NewContactWith(no1.NodeId.ID)
+	c3 := NewNodeIdWith(no1.NodeId.key)
 
-	no1.RoutingTable.Add(c1)
-	no1.RoutingTable.Add(c2)
-	no1.RoutingTable.Add(c3)
+	no1.RoutingTable.Add(&c1)
+	no1.RoutingTable.Add(&c2)
+	no1.RoutingTable.Add(&c3)
 	//no1.RoutingTable.Describe()
 	fmt.Println()
 
@@ -79,22 +79,22 @@ func TestNode_FindNode_Network(t *testing.T) {
 	if err != nil {
 		panic("Nodeid not found in routing table")
 	}
-	if foundNode.ID != n2.NodeId.ID {
+	if foundNode.key != n2.NodeId.key {
 		panic("found wrong node")
 	}
 }
 
 func TestNode_FindNodeRecursive(t *testing.T) {
-	a := NewNodeWithId(NewNodeIdFrom("0"))
+	a := NewNodeWithKey(NewKeyFrom(""))
 	go a.Start()
 
-	n1 := NewNode()
+	n1 := NewNodeWithKey(NewKeyFrom("a"))
 	go n1.Start()
 
 	a.RoutingTable.Add(n1.NodeId)
 
-	for i := 0; i < 128/8; i++ {
-		n := NewNode()
+	for i := DistanceBuckets; i > 110; i-- {
+		n := NewNodeWithKey(NewKeyFrom(fmt.Sprintf("%d", i)))
 		go n.Start()
 		n1.RoutingTable.Add(n.NodeId)
 	}
@@ -103,7 +103,7 @@ func TestNode_FindNodeRecursive(t *testing.T) {
 	lastNode := lastBucket.LastNode()
 
 	if found, err := a.FindNode(lastNode); err == nil {
-		if found.ID != lastNode.ID {
+		if found.key != lastNode.key {
 			t.Fatal("Found wrong node")
 		}
 	} else {
@@ -112,10 +112,22 @@ func TestNode_FindNodeRecursive(t *testing.T) {
 
 	firstNode := lastBucket.Get(0)
 	if found, err := a.FindNode(firstNode); err == nil {
-		if found.ID != firstNode.ID {
+		if found.key != firstNode.key {
 			t.Fatal("found wrong node")
 		}
 	} else {
 		t.Fatal(err)
+	}
+}
+
+func NewNodeAtDistance(node *Node, distance uint32) Node {
+	nodeid := NewNodeId()
+	for {
+		distanceTo := nodeid.DistanceTo(node.NodeId)
+		if distanceTo == distance {
+			node1 := NewNodeWithId(nodeid)
+			return *node1
+		}
+		nodeid = NewNodeId()
 	}
 }

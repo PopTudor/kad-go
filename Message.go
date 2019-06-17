@@ -42,11 +42,11 @@ func (e MessageType) String() string {
 
 type Message struct {
 	Type     MessageType `json:"type"`
-	From     Id          `json:"from"`
-	TO       Id          `json:"to"`
+	From     Key         `json:"from"`
+	TO       Key         `json:"to"`
 	FileHash string      `json:"file_hash"`
 	Bucket   Bucket      `json:"bucket"`
-	FindId   Id          `json:"find_id"`
+	FindId   Key         `json:"find_id"`
 }
 
 func (m *Message) String() string {

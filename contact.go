@@ -7,43 +7,44 @@ import (
 )
 
 type NodeId struct {
-	ID Id
-	IP *net.TCPAddr
+	key Key
+	IP  *net.TCPAddr
 }
 
 func newRandomPort() int {
-	port := rand.Intn(65535) + 10.000
+	port := rand.Intn(65535)
 	return port
 }
 
-func NewContact() *NodeId {
+func NewNodeId() NodeId {
 	port := newRandomPort()
 	address := fmt.Sprintf("127.0.0.1:%d", port)
 	ip, err := net.ResolveTCPAddr("tcp", address)
+
 	if err != nil {
 		panic(err)
 	}
-	id := NewNodeID()
-	return NewContactWithIp(id, ip)
+	id := NewNodeKey()
+	return NewNodeIdWithIp(id, ip)
 }
 
-func NewContactWith(id Id) *NodeId {
-	n := NewContact()
-	n.ID = id
+func NewNodeIdWith(id Key) NodeId {
+	n := NewNodeId()
+	n.key = id
 	return n
 }
 
-func NewContactWithIp(id Id, addr *net.TCPAddr) *NodeId {
-	return &NodeId{ID: id, IP: addr}
+func NewNodeIdWithIp(id Key, addr *net.TCPAddr) NodeId {
+	return NodeId{key: id, IP: addr}
 }
 
 func (c *NodeId) DistanceTo(id *NodeId) uint32 {
-	return c.ID.SharedPrefixLen(id.ID)
+	return c.key.SharedPrefixLen(id.key)
 }
 
 func (c *NodeId) Describe() {
 	fmt.Printf("%s", c)
 }
 func (c *NodeId) String() string {
-	return fmt.Sprintf("{%s / %s}", c.ID.StringHex(), c.IP.String())
+	return fmt.Sprintf("{%s / %s}", c.key.StringHex(), c.IP.String())
 }

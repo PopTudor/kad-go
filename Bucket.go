@@ -5,18 +5,18 @@ import "fmt"
 const NodesInBucket = 20
 
 type Bucket struct {
-	Contacts []*NodeId
+	nodes []*NodeId
 }
 
 func (b *Bucket) Describe() {
-	for contact := range b.Contacts {
-		fmt.Printf("NodeId %d: ", contact)
-		b.Contacts[contact].Describe()
+	for node := range b.nodes {
+		fmt.Printf("NodeId %d: ", node)
+		b.nodes[node].Describe()
 	}
 }
 
 func (b *Bucket) Add(contact *NodeId) {
-	if len(b.Contacts) >= NodesInBucket {
+	if len(b.nodes) >= NodesInBucket {
 		// if this happens we should actually ping each node and remove the slowest from the list instead of the last one
 		b.Pop()
 	}
@@ -25,19 +25,19 @@ func (b *Bucket) Add(contact *NodeId) {
 
 // pop back item
 func (b *Bucket) Pop() {
-	b.Contacts = b.Contacts[1:]
+	b.nodes = b.nodes[1:]
 }
 
 func (b *Bucket) PushFront(contact *NodeId) {
-	b.Contacts = append([]*NodeId{contact}, b.Contacts...)
+	b.nodes = append([]*NodeId{contact}, b.nodes...)
 }
 
 func (b *Bucket) Has(id NodeId) (bool, int16) {
-	if b.Contacts == nil {
+	if b.nodes == nil {
 		return false, -1
 	}
-	for i, contact := range b.Contacts {
-		if contact.ID == id.ID {
+	for i, contact := range b.nodes {
+		if contact.key == id.key {
 			return true, int16(i)
 		}
 	}
@@ -45,13 +45,13 @@ func (b *Bucket) Has(id NodeId) (bool, int16) {
 }
 
 func (b *Bucket) Get(i int16) NodeId {
-	return *b.Contacts[i]
+	return *b.nodes[i]
 }
 
 func (b *Bucket) IsEmpty() bool {
-	return len(b.Contacts) == 0
+	return len(b.nodes) == 0
 }
 
 func (b *Bucket) LastNode() NodeId {
-	return *b.Contacts[len(b.Contacts)-1]
+	return *b.nodes[len(b.nodes)-1]
 }

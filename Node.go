@@ -15,11 +15,17 @@ type Node struct {
 }
 
 func NewNode() *Node {
-	id := NewNodeID()
-	contact := NewContactWith(id)
+	id := NewNodeKey()
+	contact := NewNodeIdWith(id)
 	return &Node{
-		NodeId:       contact,
-		RoutingTable: NewRoutingTable(contact),
+		NodeId:       &contact,
+		RoutingTable: NewRoutingTable(&contact),
+	}
+}
+func NewNodeWithId(id NodeId) *Node {
+	return &Node{
+		NodeId:       &id,
+		RoutingTable: NewRoutingTable(&id),
 	}
 }
 
@@ -27,24 +33,24 @@ func NewNodeWithPort(port uint16) *Node {
 	if port > 65535 {
 		panic("Port too big")
 	}
-	id := NewNodeID()
+	id := NewNodeKey()
 
 	address := fmt.Sprintf("127.0.0.1:%d", port)
 	ip, err := net.ResolveTCPAddr("tcp", address)
 	if err != nil {
 		panic(err)
 	}
-	contact := NewContactWithIp(id, ip)
+	contact := NewNodeIdWithIp(id, ip)
 	return &Node{
-		NodeId:       contact,
-		RoutingTable: NewRoutingTable(contact),
+		NodeId:       &contact,
+		RoutingTable: NewRoutingTable(&contact),
 	}
 }
 
-func NewNodeWithId(id Id) *Node {
-	nodeId := NewContactWith(id)
+func NewNodeWithKey(key Key) *Node {
+	nodeId := NewNodeIdWith(key)
 	n := NewNode()
-	n.NodeId = nodeId
+	n.NodeId = &nodeId
 	return n
 }
 
@@ -87,7 +93,7 @@ func (n *Node) handleConnection(conn net.Conn) {
 	msg := Message{}
 	decoder.Decode(&msg)
 
-	if msg.TO != n.NodeId.ID {
+	if msg.TO != n.NodeId.key {
 		fmt.Println("Ignored. Not targeted node")
 		return
 	}
@@ -116,8 +122,8 @@ func (n *Node) Ping(other *Node) {
 
 	msg := Message{
 		Type: PING,
-		From: n.NodeId.ID,
-		TO:   other.NodeId.ID,
+		From: n.NodeId.key,
+		TO:   other.NodeId.key,
 	}
 	fmt.Printf("%s >>> %s\n", n, msg)
 	encoder := json.NewEncoder(conn)
@@ -173,15 +179,15 @@ func (n *Node) findNodeRemote(searchedNode NodeId, bucket Bucket) (*NodeId, erro
 		return nil, errors.New("Node not found at remote nodes")
 	}
 
-	for _, item := range bucket.Contacts {
+	for _, item := range bucket.nodes {
 		conn, err := net.DialTCP("tcp", nil, item.IP)
 		checkError(err)
 
 		msg := Message{
 			Type:   FIND_NODE,
-			From:   n.NodeId.ID,
-			TO:     item.ID,
-			FindId: searchedNode.ID,
+			From:   n.NodeId.key,
+			TO:     item.key,
+			FindId: searchedNode.key,
 		}
 		fmt.Printf("%s >>> %s\n", n, msg)
 		encoder := json.NewEncoder(conn)

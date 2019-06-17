@@ -8,28 +8,28 @@ import (
 	"time"
 )
 
-const NodeLen = 20
+const KeyLen = 20
 
-type Id [NodeLen]byte
+type Key [KeyLen]byte
 
-func NewNodeID() Id {
-	var token [NodeLen]byte
+func NewNodeKey() Key {
+	var token [KeyLen]byte
 	rand.Seed(time.Now().UnixNano())
 	rand.Read(token[:])
 	hasher := sha1.New()
 	hasher.Write(token[:])
 	sha := hasher.Sum(nil)
 	copy(token[:], sha)
-	return Id(token)
+	return Key(token)
 }
-func NewNodeIdFrom(str string) Id {
+func NewKeyFrom(str string) Key {
 	token := str
-	for i := len(str); i < NodeLen; i++ {
+	for i := len(str); i < KeyLen; i++ {
 		token += str
 	}
-	var res [NodeLen]byte
+	var res [KeyLen]byte
 	copy(res[:], token)
-	return Id(res)
+	return Key(res)
 }
 
 // More shared bit pre-fix means closer distance between node ids
@@ -48,9 +48,9 @@ func NewNodeIdFrom(str string) Id {
 // the distance would have been greater
 // Notice that the longer the shared sequence of bits is, the more zeroes we have
 // in the resulting number
-func (nid *Id) SharedPrefixLen(oid Id) uint32 {
+func (nid *Key) SharedPrefixLen(oid Key) uint32 {
 	prefix := 0
-	for i := 0; i < NodeLen; i++ {
+	for i := 0; i < KeyLen; i++ {
 		xor := nid[i] ^ oid[i]
 		leadingZeros := bits.LeadingZeros8(xor)
 		prefix += leadingZeros
@@ -62,25 +62,25 @@ func (nid *Id) SharedPrefixLen(oid Id) uint32 {
 	}
 	return uint32(prefix)
 }
-func (nid *Id) Describe() {
+func (nid *Key) Describe() {
 	fmt.Printf("NodeId: %s\n", nid.String())
 }
-func (nid *Id) DescribeHex() {
+func (nid *Key) DescribeHex() {
 	fmt.Printf("%s\n", nid.StringHex())
 }
-func (nid *Id) StringHex() string {
+func (nid *Key) StringHex() string {
 	return fmt.Sprintf("%X", nid.Slice())
 }
-func (nid *Id) DescribeBinary() {
+func (nid *Key) DescribeBinary() {
 	fmt.Printf("%08b\n", nid.Slice())
 }
-func (nid *Id) Array() [NodeLen]byte {
-	return [NodeLen]byte(*nid)
+func (nid *Key) Array() [KeyLen]byte {
+	return [KeyLen]byte(*nid)
 }
-func (nid *Id) Slice() []byte {
-	bytes := [NodeLen]byte(*nid)
+func (nid *Key) Slice() []byte {
+	bytes := [KeyLen]byte(*nid)
 	return bytes[:]
 }
-func (nid Id) String() string {
-	return fmt.Sprintf("%X", [NodeLen]byte(nid))
+func (nid Key) String() string {
+	return fmt.Sprintf("%X", [KeyLen]byte(nid))
 }

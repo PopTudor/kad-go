@@ -6,14 +6,14 @@ import (
 )
 
 func TestRoutingTable_AddToEnds(t *testing.T) {
-	c := NewContact()
-	rt := NewRoutingTable(c)
+	c := NewNodeId()
+	rt := NewRoutingTable(&c)
 
-	from := NewNodeIdFrom("6C7D63826DE1F6529E4E248771CA45FB69CC397B")
-	nc := NewContactWith(from)
+	from := NewKeyFrom("6C7D63826DE1F6529E4E248771CA45FB69CC397B")
+	nc := NewNodeIdWith(from)
 	nc.Describe()
-	index := rt.Add(nc)
+	index := rt.Add(&nc)
 	fmt.Printf("addet at index: %d\n", index)
-	index = rt.Add(c)
+	index = rt.Add(&c)
 	fmt.Printf("addet at index: %d\n", index)
 }
