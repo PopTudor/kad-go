@@ -17,6 +17,11 @@ func newRandomPort() int {
 }
 
 func NewNodeId() NodeId {
+	key := NewNodeKey()
+	return NewNodeIdWith(key)
+}
+
+func NewNodeIdWith(key Key) NodeId {
 	port := newRandomPort()
 	address := fmt.Sprintf("127.0.0.1:%d", port)
 	ip, err := net.ResolveTCPAddr("tcp", address)
@@ -24,14 +29,7 @@ func NewNodeId() NodeId {
 	if err != nil {
 		panic(err)
 	}
-	id := NewNodeKey()
-	return NewNodeIdWithIp(id, ip)
-}
-
-func NewNodeIdWith(id Key) NodeId {
-	n := NewNodeId()
-	n.key = id
-	return n
+	return NewNodeIdWithIp(key, ip)
 }
 
 func NewNodeIdWithIp(id Key, addr *net.TCPAddr) NodeId {

@@ -15,13 +15,10 @@ type Node struct {
 }
 
 func NewNode() *Node {
-	id := NewNodeKey()
-	contact := NewNodeIdWith(id)
-	return &Node{
-		NodeId:       &contact,
-		RoutingTable: NewRoutingTable(&contact),
-	}
+	key := NewNodeKey()
+	return NewNodeWithKey(key)
 }
+
 func NewNodeWithId(id NodeId) *Node {
 	return &Node{
 		NodeId:       &id,
@@ -49,9 +46,7 @@ func NewNodeWithPort(port uint16) *Node {
 
 func NewNodeWithKey(key Key) *Node {
 	nodeId := NewNodeIdWith(key)
-	n := NewNode()
-	n.NodeId = &nodeId
-	return n
+	return NewNodeWithId(nodeId)
 }
 
 func (n *Node) Start() {

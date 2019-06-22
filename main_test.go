@@ -85,10 +85,12 @@ func TestNode_FindNode_Network(t *testing.T) {
 }
 
 func TestNode_FindNodeRecursive(t *testing.T) {
+	// current node at index 0 in the routing table
 	a := NewNodeWithKey(NewKeyFrom(""))
 	t.Log(a.String())
 	go a.Start()
 
+	// node at index 1 in a's routing table
 	k1 := NewKeyFrom("00000000000000000001")
 	t.Log(k1.String())
 	n1 := NewNodeWithKey(k1)

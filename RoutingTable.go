@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 )
 
 const DistanceBuckets = 160
@@ -41,6 +42,16 @@ func bucketIndex(prefixLen uint32) uint32 {
 		index--
 	}
 	return index
+}
+
+func (rt *RoutingTable) IsNodeIdInBucket(id *NodeId, index int) bool {
+	if index > DistanceBuckets || index < 0 {
+		log.Panicf("Invalid index %d\n", index)
+		return false
+	}
+	bucket := rt.buckets[index]
+	hasId, _ := bucket.Has(*id)
+	return hasId
 }
 
 func (rt *RoutingTable) Describe() {
