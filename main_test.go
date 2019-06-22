@@ -86,14 +86,17 @@ func TestNode_FindNode_Network(t *testing.T) {
 
 func TestNode_FindNodeRecursive(t *testing.T) {
 	a := NewNodeWithKey(NewKeyFrom(""))
+	t.Log(a.String())
 	go a.Start()
 
-	n1 := NewNodeWithKey(NewKeyFrom("a"))
+	k1 := NewKeyFrom("00000000000000000001")
+	t.Log(k1.String())
+	n1 := NewNodeWithKey(k1)
 	go n1.Start()
 
 	a.RoutingTable.Add(n1.NodeId)
 
-	for i := DistanceBuckets; i > 110; i-- {
+	for i := 0; i > 110; i-- {
 		n := NewNodeWithKey(NewKeyFrom(fmt.Sprintf("%d", i)))
 		go n.Start()
 		n1.RoutingTable.Add(n.NodeId)

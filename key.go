@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/bits"
 	"math/rand"
+	"strconv"
 	"time"
 )
 
@@ -23,13 +24,23 @@ func NewNodeKey() Key {
 	return Key(token)
 }
 func NewKeyFrom(str string) Key {
-	token := str
 	for i := len(str); i < KeyLen; i++ {
-		token += str
+		str += "0"
 	}
+	r := stringToBin(str)
 	var res [KeyLen]byte
-	copy(res[:], token)
+	copy(res[:], r)
 	return Key(res)
+}
+
+// Convert binary string to byte array
+// eg "00000000000000000001" => 00000000000000000001
+func stringToBin(s string) (binString []byte) {
+	for _, c := range s {
+		bin, _ := strconv.Atoi(string(c))
+		binString = append(binString, byte(bin))
+	}
+	return
 }
 
 // More shared bit pre-fix means closer distance between node ids
