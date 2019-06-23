@@ -75,7 +75,7 @@ func (rt *RoutingTable) FindClosestBucket(id *NodeId) Bucket {
 	return rt.buckets[index]
 }
 func (rt *RoutingTable) FindClosestBucketById(id Key) Bucket {
-	index := bucketIndex(rt.currentNode.key.SharedPrefixLen(id))
+	index := bucketIndex(rt.currentNode.Key.SharedPrefixLen(id))
 	for rt.buckets[index].IsEmpty() && index > 0 {
 		index--
 	}

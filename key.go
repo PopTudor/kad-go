@@ -100,5 +100,6 @@ func (nid *Key) Slice() []byte {
 	return bytes[:]
 }
 func (nid Key) String() string {
-	return fmt.Sprintf("%08b", [KeyLen]byte(nid))
+	//return fmt.Sprintf("%08b", [KeyLen]byte(nid))
+	return fmt.Sprintf("%X", [KeyLen]byte(nid))
 }

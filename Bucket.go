@@ -8,6 +8,11 @@ type Bucket struct {
 	nodes []*NodeId
 }
 
+func NewBucket(ids []*NodeId) (b Bucket) {
+	copy(b.nodes, ids)
+	return b
+}
+
 func (b *Bucket) Describe() {
 	for node := range b.nodes {
 		fmt.Printf("NodeId %d: ", node)
@@ -37,7 +42,7 @@ func (b *Bucket) Has(id NodeId) (bool, int16) {
 		return false, -1
 	}
 	for i, contact := range b.nodes {
-		if contact.key == id.key {
+		if contact.Key == id.Key {
 			return true, int16(i)
 		}
 	}

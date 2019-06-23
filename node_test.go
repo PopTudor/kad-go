@@ -21,7 +21,7 @@ func TestNode_InValid_NodeId_Ping(t *testing.T) {
 	if msg.Type != PONG {
 		t.Error("Message is not PONG")
 	}
-	if msg.From != n3.NodeId.key {
+	if msg.From != n3.NodeId.Key {
 		t.Error("PONG is not from desired node")
 	}
 }
@@ -54,7 +54,7 @@ func TestNode_FindNode_Network(t *testing.T) {
 	if err != nil {
 		panic("Nodeid not found in routing table")
 	}
-	if foundNode.key != n2.NodeId.key {
+	if foundNode.Key != n2.NodeId.Key {
 		panic("found wrong node")
 	}
 }

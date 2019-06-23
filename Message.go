@@ -45,11 +45,23 @@ type Message struct {
 	From     Key         `json:"from"`
 	TO       Key         `json:"to"`
 	FileHash string      `json:"file_hash"`
-	Bucket   Bucket      `json:"bucket"`
+	Nodes    []*NodeId    `json:"nodes"`
 	FindId   Key         `json:"find_id"`
 }
 
 func (m *Message) String() string {
 	res2B, _ := json.Marshal(m)
 	return fmt.Sprintf("%s", string(res2B))
+}
+
+func (m *Message) Has(id NodeId) (bool, int16) {
+	if m.Nodes == nil {
+		return false, -1
+	}
+	for i, contact := range m.Nodes {
+		if contact.Key == id.Key {
+			return true, int16(i)
+		}
+	}
+	return false, -1
 }

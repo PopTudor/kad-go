@@ -7,7 +7,7 @@ import (
 )
 
 type NodeId struct {
-	key Key
+	Key Key
 	IP  *net.TCPAddr
 }
 
@@ -33,16 +33,16 @@ func NewNodeIdWith(key Key) NodeId {
 }
 
 func NewNodeIdWithIp(id Key, addr *net.TCPAddr) NodeId {
-	return NodeId{key: id, IP: addr}
+	return NodeId{Key: id, IP: addr}
 }
 
 func (c *NodeId) DistanceTo(id *NodeId) uint32 {
-	return c.key.SharedPrefixLen(id.key)
+	return c.Key.SharedPrefixLen(id.Key)
 }
 
 func (c *NodeId) Describe() {
 	fmt.Printf("%s", c)
 }
 func (c *NodeId) String() string {
-	return fmt.Sprintf("{%s / %s}", c.key.StringHex(), c.IP.String())
+	return fmt.Sprintf("{%s / %s}", c.Key.StringHex(), c.IP.String())
 }

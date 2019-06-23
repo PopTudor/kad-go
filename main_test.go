@@ -24,7 +24,7 @@ func TestBasic(t *testing.T) {
 	ids := NewNodeKey()
 	c2 := NewNodeIdWithIp(ids, ip)
 
-	c3 := NewNodeIdWith(no1.NodeId.key)
+	c3 := NewNodeIdWith(no1.NodeId.Key)
 
 	no1.RoutingTable.Add(c1)
 	no1.RoutingTable.Add(c2)
