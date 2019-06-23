@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math/bits"
 	"math/rand"
-	"strconv"
 	"time"
 )
 
@@ -23,24 +22,32 @@ func NewNodeKey() Key {
 	copy(token[:], sha)
 	return Key(token)
 }
-func NewKeyFrom(str string) Key {
+
+// Why byte and not string? you can pass byte values
+// such as [255, 254, 0...] and be a valid key.
+// If we were to pass a string, it would be more difficult to
+// parse "1" => 255 or "255" into -> 11111111 because we would need
+// to parse tokens instead
+func NewKeyFrom(str []byte) Key {
 	for i := len(str); i < KeyLen; i++ {
-		str += "0"
+		str = append(str, 0)
 	}
-	r := stringToBin(str)
 	var res [KeyLen]byte
-	copy(res[:], r)
+	copy(res[:], str)
 	return Key(res)
 }
 
-// Convert binary string to byte array
-// eg "00000000000000000001" => 00000000000000000001
-func stringToBin(s string) (binString []byte) {
-	for _, c := range s {
-		bin, _ := strconv.Atoi(string(c))
-		binString = append(binString, byte(bin))
+// Use this to generate a byte array with the given number at position
+// eg index = keylen-1, value 1 =>
+// [00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000001]
+func NewKeyAtIndexWithBitsSetTo(value byte, index int) Key {
+	res := [KeyLen]byte{}
+	for i := range res {
+		if i == index {
+			res[i] = value
+		}
 	}
-	return
+	return NewKeyFrom(res[:])
 }
 
 // More shared bit pre-fix means closer distance between node ids
@@ -93,5 +100,5 @@ func (nid *Key) Slice() []byte {
 	return bytes[:]
 }
 func (nid Key) String() string {
-	return fmt.Sprintf("%X", [KeyLen]byte(nid))
+	return fmt.Sprintf("%08b", [KeyLen]byte(nid))
 }

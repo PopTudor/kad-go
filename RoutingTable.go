@@ -5,7 +5,8 @@ import (
 	"log"
 )
 
-const DistanceBuckets = 160
+// number of buckets in the routing table
+const Distance_Buckets = 160
 
 type RoutingTable struct {
 	currentNode *NodeId
@@ -18,13 +19,13 @@ type RoutingTable struct {
 	// and thus greater indexes e.g. d(00111 ^ 00110) = index(4) and  d(00110 ^ 00110) = index(5) which means
 	// the more bits are shared, the further in the list of buckets the node is put. Doing 160 - 4 or 160 - 5
 	// will give you the opposite and store closer to 0;
-	buckets [DistanceBuckets]Bucket
+	buckets [Distance_Buckets]Bucket
 }
 
 func NewRoutingTable(id *NodeId) *RoutingTable {
 	rt := &RoutingTable{
 		currentNode: id,
-		buckets:     [DistanceBuckets]Bucket{},
+		buckets:     [Distance_Buckets]Bucket{},
 	}
 	rt.Add(id)
 	return rt
@@ -37,17 +38,20 @@ func (rt *RoutingTable) Add(contact *NodeId) uint32 {
 }
 
 func bucketIndex(prefixLen uint32) uint32 {
-	index := DistanceBuckets - prefixLen
-	if index == DistanceBuckets {
+	index := Distance_Buckets - prefixLen
+	if index == Distance_Buckets {
 		index--
 	}
 	return index
 }
 
 func (rt *RoutingTable) IsNodeIdInBucket(id *NodeId, index int) bool {
-	if index > DistanceBuckets || index < 0 {
+	if index > Distance_Buckets || index < 0 {
 		log.Panicf("Invalid index %d\n", index)
 		return false
+	}
+	if index == Distance_Buckets {
+		index--
 	}
 	bucket := rt.buckets[index]
 	hasId, _ := bucket.Has(*id)
@@ -83,7 +87,7 @@ func (rt *RoutingTable) LastBucket() Bucket {
 }
 
 func (rt *RoutingTable) LastNotEmptyBucket() Bucket {
-	for i := DistanceBuckets - 1; i > 0; i-- {
+	for i := Distance_Buckets - 1; i > 0; i-- {
 		if !rt.buckets[i].IsEmpty() {
 			return rt.buckets[i]
 		}

@@ -165,7 +165,7 @@ func (n *Node) Store(value FileID, contact NodeId) {
 }
 
 func (n *Node) String() string {
-	return fmt.Sprintf("%s", n.NodeId)
+	return fmt.Sprintf("%s", n.NodeId.String())
 }
 
 func (n *Node) findNodeRemote(searchedNode NodeId, bucket Bucket) (*NodeId, error) {

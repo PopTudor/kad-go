@@ -1,40 +1,38 @@
 package main
 
 import (
-	"fmt"
 	"testing"
 )
 
-func TestRoutingTable_AddToEnds(t *testing.T) {
-	c := NewNodeId()
-	rt := NewRoutingTable(&c)
-
-	from := NewKeyFrom("6C7D63826DE1F6529E4E248771CA45FB69CC397B")
-	nc := NewNodeIdWith(from)
-	nc.Describe()
-	index := rt.Add(&nc)
-	fmt.Printf("addet at index: %d\n", index)
-	index = rt.Add(&c)
-	fmt.Printf("addet at index: %d\n", index)
-}
-func TestNode_At_Correct_Bucket(t *testing.T) {
-	ka := NewKeyFrom("")
+func Test_Add_Node_At_Correct_Bucket(t *testing.T) {
+	ka := NewKeyFrom([]byte{})
 	a := NewNodeWithKey(ka)
-	t.Log(a.String())
+	t.Log(a.NodeId.key.String())
 
 	// a should have itself in bucket 0
 	if !a.RoutingTable.IsNodeIdInBucket(a.NodeId, 0) {
 		t.Fatal("Node not in desired bucket")
 	}
 	// node at index 1 in a's routing table
-	kb := NewKeyFrom("00000000000000000001")
-	t.Log(kb.String())
+	kb := NewKeyAtIndexWithBitsSetTo(1, KeyLen-1)
 	b := NewNodeWithKey(kb)
+	t.Log(b.NodeId.key.String())
 
 	// a should be in bucket 0
 	// b should be in bucket 1
 	a.RoutingTable.Add(b.NodeId)
+	if !a.RoutingTable.IsNodeIdInBucket(b.NodeId, 1) {
+		t.Fatal("Node b should have been in bucket 2")
+	}
 
-	b.RoutingTable.Add(a.NodeId)
+	kn := NewKeyAtIndexWithBitsSetTo(255, 0)
+	n := NewNodeWithKey(kn)
+	t.Log(n.NodeId.key.String())
+
+	a.RoutingTable.Add(n.NodeId)
+
+	if !a.RoutingTable.IsNodeIdInBucket(n.NodeId, Distance_Buckets-1) {
+		t.Fatal("Node n should be in last bucket")
+	}
 
 }
