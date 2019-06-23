@@ -45,11 +45,17 @@ func TestNode_InValid_NodeId_Ping(t *testing.T) {
 	n1 := NewNode()
 	n2 := NewNode()
 	n3 := NewNode()
-	go n1.Start()
-	go n2.Start()
-	go n3.Start()
+	n1.Start()
+	n2.Start()
+	n3.Start()
 
-	n1.Ping(n3)
+	msg := n1.Ping(n3)
+	if msg.Type != PONG {
+		t.Error("Message is not PONG")
+	}
+	if msg.From != n3.NodeId.key {
+		t.Error("PONG is not from desired node")
+	}
 }
 func TestNode_FindNode(t *testing.T) {
 	n1 := NewNode()
@@ -64,13 +70,13 @@ func TestNode_FindNode(t *testing.T) {
 }
 func TestNode_FindNode_Network(t *testing.T) {
 	n1 := NewNode()
-	go n1.Start()
+	n1.Start()
 
 	n2 := NewNode()
-	go n2.Start()
+	n2.Start()
 
 	n3 := NewNode()
-	go n3.Start()
+	n3.Start()
 
 	n1.RoutingTable.Add(n2.NodeId)
 	n3.RoutingTable.Add(n1.NodeId)

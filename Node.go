@@ -57,14 +57,16 @@ func (n *Node) Start() {
 		// handle error
 	}
 	fmt.Printf("start %s\n", n)
-	for {
-		conn, err := ln.Accept()
-		if err != nil {
-			// handle error
-			panic(err)
+	go func() {
+		for {
+			conn, err := ln.Accept()
+			if err != nil {
+				// handle error
+				panic(err)
+			}
+			n.handleConnection(conn)
 		}
-		n.handleConnection(conn)
-	}
+	}()
 }
 
 func checkError(err error) {
@@ -110,7 +112,7 @@ func (n *Node) handleConnection(conn net.Conn) {
 }
 
 // ping a node to find out if is online
-func (n *Node) Ping(other *Node) {
+func (n *Node) Ping(other *Node) Message {
 	fmt.Println(other.NodeId.IP.String())
 	conn, err := net.DialTCP("tcp", nil, other.NodeId.IP)
 	checkError(err)
@@ -128,6 +130,7 @@ func (n *Node) Ping(other *Node) {
 	decoder.Decode(&msg)
 
 	fmt.Printf("%s <<< %s\n", n, msg)
+	return msg
 }
 
 // call to find a specific node with given id. The recipiend of this call
