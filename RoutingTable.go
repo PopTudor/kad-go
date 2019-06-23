@@ -9,7 +9,7 @@ import (
 const Distance_Buckets = 160
 
 type RoutingTable struct {
-	currentNode *NodeId
+	currentNode NodeId
 	//
 	// buckets with index closer to 0 store contacts closer to the current node.
 	// The indexing is reversed because is a bit easier to thing that a smaller distance is closer to a node.
@@ -22,7 +22,7 @@ type RoutingTable struct {
 	buckets [Distance_Buckets]Bucket
 }
 
-func NewRoutingTable(id *NodeId) *RoutingTable {
+func NewRoutingTable(id NodeId) *RoutingTable {
 	rt := &RoutingTable{
 		currentNode: id,
 		buckets:     [Distance_Buckets]Bucket{},
@@ -31,9 +31,9 @@ func NewRoutingTable(id *NodeId) *RoutingTable {
 	return rt
 }
 
-func (rt *RoutingTable) Add(contact *NodeId) uint32 {
-	index := bucketIndex(rt.currentNode.DistanceTo(contact))
-	rt.buckets[index].Add(contact)
+func (rt *RoutingTable) Add(contact NodeId) uint32 {
+	index := bucketIndex(rt.currentNode.DistanceTo(&contact))
+	rt.buckets[index].Add(&contact)
 	return index
 }
 
@@ -45,7 +45,7 @@ func bucketIndex(prefixLen uint32) uint32 {
 	return index
 }
 
-func (rt *RoutingTable) IsNodeIdInBucket(id *NodeId, index int) bool {
+func (rt *RoutingTable) IsNodeIdInBucket(id NodeId, index int) bool {
 	if index > Distance_Buckets || index < 0 {
 		log.Panicf("Invalid index %d\n", index)
 		return false
@@ -54,7 +54,7 @@ func (rt *RoutingTable) IsNodeIdInBucket(id *NodeId, index int) bool {
 		index--
 	}
 	bucket := rt.buckets[index]
-	hasId, _ := bucket.Has(*id)
+	hasId, _ := bucket.Has(id)
 	return hasId
 }
 

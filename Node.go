@@ -9,7 +9,7 @@ import (
 )
 
 type Node struct {
-	NodeId       *NodeId
+	NodeId       NodeId
 	RoutingTable *RoutingTable
 	DHT          DHT
 }
@@ -21,8 +21,8 @@ func NewNode() *Node {
 
 func NewNodeWithId(id NodeId) *Node {
 	return &Node{
-		NodeId:       &id,
-		RoutingTable: NewRoutingTable(&id),
+		NodeId:       id,
+		RoutingTable: NewRoutingTable(id),
 	}
 }
 
@@ -37,10 +37,10 @@ func NewNodeWithPort(port uint16) *Node {
 	if err != nil {
 		panic(err)
 	}
-	contact := NewNodeIdWithIp(id, ip)
+	nodeId := NewNodeIdWithIp(id, ip)
 	return &Node{
-		NodeId:       &contact,
-		RoutingTable: NewRoutingTable(&contact),
+		NodeId:       nodeId,
+		RoutingTable: NewRoutingTable(nodeId),
 	}
 }
 
@@ -144,12 +144,12 @@ func (n *Node) FindNode(node NodeId) (*NodeId, error) {
 		return &get, nil
 	} else {
 		found, err := n.findNodeRemote(node, bucket)
-		if err == nil {
-			n.RoutingTable.Add(found)
+		if err != nil {
+			return nil, err
 		}
-		return found, err
+		n.RoutingTable.Add(*found)
+		return found, nil
 	}
-	return nil, errors.New("Node not found")
 }
 
 // this call tries to find a specific file NodeId to be located. If the receiving
@@ -172,7 +172,7 @@ func (n *Node) String() string {
 }
 
 func (n *Node) findNodeRemote(searchedNode NodeId, bucket Bucket) (*NodeId, error) {
-	has, _ := bucket.Has(*n.NodeId)
+	has, _ := bucket.Has(n.NodeId)
 	if has {
 		return nil, errors.New("Node not found at remote nodes")
 	}
