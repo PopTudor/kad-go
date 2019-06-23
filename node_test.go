@@ -52,7 +52,8 @@ func TestNode_FindNode_Network(t *testing.T) {
 
 	foundNode, err := n3.FindNode(n2.NodeId)
 	if err != nil {
-		panic("Nodeid not found in routing table")
+		// n3 entered recursive mode with itself
+		panic(err)
 	}
 	if foundNode.Key != n2.NodeId.Key {
 		panic("found wrong node")

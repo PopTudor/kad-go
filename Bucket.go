@@ -5,11 +5,13 @@ import "fmt"
 const NodesInBucket = 20
 
 type Bucket struct {
-	nodes []*NodeId
+	nodes []NodeId
 }
 
-func NewBucket(ids []*NodeId) (b Bucket) {
-	copy(b.nodes, ids)
+func NewBucket(ids []NodeId) (Bucket) {
+	b := Bucket{
+		nodes: ids,
+	}
 	return b
 }
 
@@ -20,7 +22,7 @@ func (b *Bucket) Describe() {
 	}
 }
 
-func (b *Bucket) Add(contact *NodeId) {
+func (b *Bucket) Add(contact NodeId) {
 	if len(b.nodes) >= NodesInBucket {
 		// if this happens we should actually ping each node and remove the slowest from the list instead of the last one
 		b.Pop()
@@ -33,8 +35,8 @@ func (b *Bucket) Pop() {
 	b.nodes = b.nodes[1:]
 }
 
-func (b *Bucket) PushFront(contact *NodeId) {
-	b.nodes = append([]*NodeId{contact}, b.nodes...)
+func (b *Bucket) PushFront(contact NodeId) {
+	b.nodes = append([]NodeId{contact}, b.nodes...)
 }
 
 func (b *Bucket) Has(id NodeId) (bool, int16) {
@@ -50,7 +52,7 @@ func (b *Bucket) Has(id NodeId) (bool, int16) {
 }
 
 func (b *Bucket) Get(i int16) NodeId {
-	return *b.nodes[i]
+	return b.nodes[i]
 }
 
 func (b *Bucket) IsEmpty() bool {
@@ -58,5 +60,5 @@ func (b *Bucket) IsEmpty() bool {
 }
 
 func (b *Bucket) LastNode() NodeId {
-	return *b.nodes[len(b.nodes)-1]
+	return b.nodes[len(b.nodes)-1]
 }

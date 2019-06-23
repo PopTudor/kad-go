@@ -137,12 +137,19 @@ func (n *Node) Ping(other *Node) Message {
 // looks in it's own routing table and returns a set of contacts that are closeset to
 // the NodeId that is being looked up
 func (n *Node) FindNode(node NodeId) (*NodeId, error) {
+	if n.NodeId == node {
+		return nil, errors.New("Can't search for self")
+	}
 	bucket := n.RoutingTable.FindClosestBucket(&node)
 	hasNode, nodeIndex := bucket.Has(node)
 	if hasNode {
 		get := bucket.Get(nodeIndex)
 		return &get, nil
 	} else {
+		hasNode, _ := bucket.Has(node)
+		if hasNode {
+
+		}
 		found, err := n.findNodeRemote(node, bucket)
 		if err != nil {
 			return nil, err
@@ -172,9 +179,10 @@ func (n *Node) String() string {
 }
 
 func (n *Node) findNodeRemote(searchedNode NodeId, bucket Bucket) (*NodeId, error) {
-	has, _ := bucket.Has(n.NodeId)
-	if has {
-		return nil, errors.New("Node not found at remote nodes")
+	has, i := bucket.Has(n.NodeId)
+	if has { // bucket has self
+		id := bucket.Get(i)
+		return &id, errors.New("Can't search for self")
 	}
 
 	for _, nodeId := range bucket.nodes {
@@ -199,8 +207,8 @@ func (n *Node) findNodeRemote(searchedNode NodeId, bucket Bucket) (*NodeId, erro
 		hasNode, index := msg.Has(searchedNode)
 		if hasNode {
 			node := msg.Nodes[index]
-			return node, nil
-		} else if len(msg.Nodes) != 0 {
+			return &node, nil
+		} else if msg.Nodes !=nil && len(msg.Nodes) != 0 {
 			b := NewBucket(msg.Nodes)
 			return n.findNodeRemote(searchedNode, b)
 		} else {

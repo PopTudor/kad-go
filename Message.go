@@ -45,7 +45,7 @@ type Message struct {
 	From     Key         `json:"from"`
 	TO       Key         `json:"to"`
 	FileHash string      `json:"file_hash"`
-	Nodes    []*NodeId    `json:"nodes"`
+	Nodes    []NodeId    `json:"nodes"`
 	FindId   Key         `json:"find_id"`
 }
 

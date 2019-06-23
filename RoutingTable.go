@@ -33,7 +33,7 @@ func NewRoutingTable(id NodeId) *RoutingTable {
 
 func (rt *RoutingTable) Add(contact NodeId) uint32 {
 	index := bucketIndex(rt.currentNode.DistanceTo(&contact))
-	rt.buckets[index].Add(&contact)
+	rt.buckets[index].Add(contact)
 	return index
 }
 
